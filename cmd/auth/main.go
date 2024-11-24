@@ -1,8 +1,8 @@
 package main
 
 import (
-	"grpc-auth/internal/app"
-	"grpc-auth/internal/config"
+	"github.com/qu0ta/go-grpc-auth/internal/app"
+	"github.com/qu0ta/go-grpc-auth/internal/config"
 	"log/slog"
 	"os"
 )

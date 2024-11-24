@@ -1,7 +1,7 @@
 package app
 
 import (
-	grpcapp "grpc-auth/internal/app/grpc"
+	grpcapp "github.com/qu0ta/go-grpc-auth/internal/app/grpc"
 	"log/slog"
 	"time"
 )

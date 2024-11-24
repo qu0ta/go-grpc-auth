@@ -2,8 +2,8 @@ package grpcapp
 
 import (
 	"fmt"
+	authgrpc "github.com/qu0ta/go-grpc-auth/internal/grpc/auth"
 	"google.golang.org/grpc"
-	authgrpc "grpc-auth/internal/grpc/auth"
 	"log/slog"
 	"net"
 )
