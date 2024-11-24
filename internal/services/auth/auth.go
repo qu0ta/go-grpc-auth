@@ -103,6 +103,11 @@ func (a *Auth) RegisterUser(ctx context.Context, email string, password string) 
 
 	id, err := a.storage.SaveUser(ctx, email, passwordHash)
 	if err != nil {
+		if errors.Is(err, storage.ErrUserExists) {
+			log.Error("user already exists: ", err.Error())
+			return 0, fmt.Errorf("%s: %w", op, err)
+		}
+
 		log.Error("failed to save user: ", err.Error())
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
