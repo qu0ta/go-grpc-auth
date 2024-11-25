@@ -2,6 +2,8 @@ package app
 
 import (
 	grpcapp "github.com/qu0ta/go-grpc-auth/internal/app/grpc"
+	"github.com/qu0ta/go-grpc-auth/internal/services/auth"
+	"github.com/qu0ta/go-grpc-auth/internal/storage/sqlite"
 	"log/slog"
 	"time"
 )
@@ -16,12 +18,20 @@ func New(
 	storagePath string,
 	tokenTTL time.Duration,
 ) *App {
-	// TODO: init storage
-	// TODO: init auth service
+	storage, err := sqlite.New(storagePath)
+	if err != nil {
+		panic(err)
+	}
 
-	grpcApp := grpcapp.New(log, grpcPort)
+	authService := auth.New(log, storage, tokenTTL)
+	grpcApp := grpcapp.New(log, grpcPort, authService)
 	return &App{
 		GRPCServer: grpcApp,
 	}
 
+}
+
+func (a *App) Run() error {
+	a.GRPCServer.MustRun()
+	return nil
 }

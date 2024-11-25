@@ -51,7 +51,7 @@ func setupLogger(env string) *slog.Logger {
 		)
 	case envProd:
 		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
+			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}),
 		)
 
 	}

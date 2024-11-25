@@ -29,12 +29,12 @@ func New(path string) (*Storage, error) {
 func (s *Storage) SaveUser(ctx context.Context, email string, passwordHash []byte) (int64, error) {
 	const op = "storage.sqlite.SaveUser"
 
-	req, err := s.db.Prepare("INSERT INTO users (email, pass_hash) VALUES (?, ?)")
+	req, err := s.db.Prepare("INSERT INTO users (email, pass_hash, app_id) VALUES (?, ?, ?)")
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	res, err := req.ExecContext(ctx, email, passwordHash)
+	res, err := req.ExecContext(ctx, email, passwordHash, 0)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) && errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique) {
@@ -61,9 +61,17 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	if err != nil {
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
+	defer row.Close()
+
+	if !row.Next() {
+		if errors.Is(row.Err(), sql.ErrNoRows) {
+			return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+		}
+		return models.User{}, fmt.Errorf("%s: %w", op, row.Err())
+	}
 
 	var user models.User
-	err = scan.Row(&user, row)
+	err = row.Scan(&user.ID, &user.Email, &user.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
@@ -95,4 +103,29 @@ func (s *Storage) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 	return isAdmin, nil
+}
+
+func (s *Storage) App(ctx context.Context, id int32) (models.App, error) {
+	const op = "storage.sqlite.App"
+
+	req, err := s.db.Prepare("SELECT id, name, secret FROM apps WHERE id = ?")
+	if err != nil {
+		return models.App{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	row, err := req.QueryContext(ctx, id)
+	if err != nil {
+		return models.App{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var app models.App
+	err = scan.Row(&app, row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.App{}, fmt.Errorf("%s: %w", op, storage.ErrAppNotFound)
+		}
+		return models.App{}, fmt.Errorf("%s: %w", op, err)
+	}
+	return app, nil
+
 }

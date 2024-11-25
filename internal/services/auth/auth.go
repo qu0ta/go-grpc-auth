@@ -61,7 +61,6 @@ func (a *Auth) Login(ctx context.Context, email string, password string) (string
 
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
-
 	if err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
 		a.log.Info("invalid credentials")
 
