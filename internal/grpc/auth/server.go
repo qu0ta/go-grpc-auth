@@ -13,7 +13,7 @@ import (
 
 type Auth interface {
 	Login(ctx context.Context, email string, password string) (token string, err error)
-	RegisterUser(ctx context.Context, email string, password string) (userID int64, err error)
+	RegisterUser(ctx context.Context, email string, password string, appId int32) (userID int64, err error)
 	IsAdmin(ctx context.Context, userID int64) (isAdmin bool, err error)
 }
 type serverAPI struct {
@@ -47,7 +47,7 @@ func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (
 		return nil, err
 	}
 
-	userId, err := s.auth.RegisterUser(ctx, req.GetEmail(), req.GetPassword())
+	userId, err := s.auth.RegisterUser(ctx, req.GetEmail(), req.GetPassword(), req.GetAppId())
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			return nil, status.Error(codes.AlreadyExists, "User already exists")

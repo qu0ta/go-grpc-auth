@@ -1,10 +1,17 @@
 version: "3"
 
 tasks:
-  migrate:
+  migrate-base:
     aliases:
       - migrate
     desc:
       "migrate database"
     cmds:
       - go run ./cmd/migrator --storage-path=./storage/auth.db --migrations-path=./migrations
+  migrate-test:
+    aliases:
+      - migrate
+    desc:
+      "migrate database"
+    cmds:
+      - go run ./cmd/migrator --storage-path=./storage/auth.db --migrations-path=./tests/migrations
