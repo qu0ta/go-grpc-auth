@@ -1,0 +1,6 @@
+env: "prod"
+storage_path: "./storage/auth.db"
+token_ttl: 1h
+grpc:
+  port: 50123
+  timeout: 5s
