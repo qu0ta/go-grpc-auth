@@ -10,6 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/qu0ta/go-grpc-auth/internal/domain/models"
 	"github.com/qu0ta/go-grpc-auth/internal/storage"
+	"strings"
 )
 
 type Storage struct {
@@ -26,7 +27,7 @@ func New(path string) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-func (s *Storage) SaveUser(ctx context.Context, email string, passwordHash []byte) (int64, error) {
+func (s *Storage) SaveUser(ctx context.Context, email string, passwordHash []byte, appId int32) (int64, error) {
 	const op = "storage.sqlite.SaveUser"
 
 	req, err := s.db.Prepare("INSERT INTO users (email, pass_hash, app_id) VALUES (?, ?, ?)")
@@ -34,7 +35,7 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passwordHash []byt
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	res, err := req.ExecContext(ctx, email, passwordHash, 0)
+	res, err := req.ExecContext(ctx, email, passwordHash, appId)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) && errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique) {
@@ -52,32 +53,22 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passwordHash []byt
 func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	const op = "storage.sqlite.User"
 
-	req, err := s.db.Prepare("SELECT id, email, pass_hash FROM users WHERE email = ?")
+	req, err := s.db.Prepare("SELECT id, email, pass_hash, app_id FROM users WHERE email = ?")
 	if err != nil {
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	row, err := req.QueryContext(ctx, email)
-	if err != nil {
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
-	}
-	defer row.Close()
-
-	if !row.Next() {
-		if errors.Is(row.Err(), sql.ErrNoRows) {
-			return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
-		}
-		return models.User{}, fmt.Errorf("%s: %w", op, row.Err())
-	}
+	row := req.QueryRowContext(ctx, strings.TrimSpace(email))
 
 	var user models.User
-	err = row.Scan(&user.ID, &user.Email, &user.PasswordHash)
+	err = row.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.AppID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 		}
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
+
 	return user, nil
 }
 
@@ -113,13 +104,10 @@ func (s *Storage) App(ctx context.Context, id int32) (models.App, error) {
 		return models.App{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	row, err := req.QueryContext(ctx, id)
-	if err != nil {
-		return models.App{}, fmt.Errorf("%s: %w", op, err)
-	}
+	row := req.QueryRowContext(ctx, id)
 
 	var app models.App
-	err = scan.Row(&app, row)
+	err = row.Scan(&app.ID, &app.Name, &app.Secret)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.App{}, fmt.Errorf("%s: %w", op, storage.ErrAppNotFound)

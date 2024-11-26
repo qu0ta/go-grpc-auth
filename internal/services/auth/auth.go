@@ -23,7 +23,7 @@ type Auth struct {
 }
 
 type Storage interface {
-	SaveUser(ctx context.Context, email string, passwordHash []byte) (uid int64, err error)
+	SaveUser(ctx context.Context, email string, passwordHash []byte, appId int32) (uid int64, err error)
 	User(ctx context.Context, email string) (models.User, error)
 	IsAdmin(ctx context.Context, userID int64) (isAdmin bool, err error)
 	App(ctx context.Context, id int32) (models.App, error)
@@ -48,7 +48,6 @@ func (a *Auth) Login(ctx context.Context, email string, password string) (string
 	)
 
 	log.Info("logging in")
-
 	user, err := a.storage.User(ctx, email)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
@@ -84,7 +83,7 @@ func (a *Auth) Login(ctx context.Context, email string, password string) (string
 	return token, nil
 
 }
-func (a *Auth) RegisterUser(ctx context.Context, email string, password string) (int64, error) {
+func (a *Auth) RegisterUser(ctx context.Context, email string, password string, appId int32) (int64, error) {
 	const op = "auth.RegisterUser"
 
 	log := a.log.With(
@@ -100,7 +99,7 @@ func (a *Auth) RegisterUser(ctx context.Context, email string, password string) 
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	id, err := a.storage.SaveUser(ctx, email, passwordHash)
+	id, err := a.storage.SaveUser(ctx, email, passwordHash, appId)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Error("user already exists: ", err.Error())
