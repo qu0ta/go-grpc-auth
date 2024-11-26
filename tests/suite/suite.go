@@ -19,7 +19,7 @@ func New(t *testing.T) (context.Context, *Suite) {
 	t.Helper()
 	t.Parallel()
 
-	cfg := config.MustLoadByPath("../config/conf.yml")
+	cfg := config.MustLoadByPath("../config/prod.yml")
 
 	ctx, cancelCtx := context.WithTimeout(context.Background(), cfg.GRPC.Timeout)
 
