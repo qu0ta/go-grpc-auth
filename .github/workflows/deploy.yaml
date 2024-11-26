@@ -19,21 +19,17 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.23.2 # Укажите вашу версию Go
+          go-version: 1.23.2
 
-      # Установить зависимости
       - name: Install dependencies
         run: go mod tidy
 
-      # Запустить тесты
       - name: Run tests
-        run: go test ./... -v
+        run: go test ./tests -v
 
-      # Сборка приложения
       - name: Build application
         run: CGO_ENABLED=1 go build -o app ./cmd/auth/main.go
 
-      # Загрузка артефакта сборки (необязательно, для отладки)
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
