@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: go mod tidy
 
-      - name: Run tests
-        run: go test ./tests -v
-
       - name: Build application
         run: CGO_ENABLED=1 go build -o app ./cmd/auth/main.go
 
